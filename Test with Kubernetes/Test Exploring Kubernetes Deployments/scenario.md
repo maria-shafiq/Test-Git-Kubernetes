@@ -1,14 +1,9 @@
-authors: null
-backendImage: ""
-description: Learn the basics of 'Deployments' in Kubernetes.
-isDraft: false
-approvalStatus: true
-environment: ""
-environmentVars: null
-isAvailable: true
-isNew: false
-isPremium: false
+image: ""
+description: An Introductory scenario for Python developers to explore the basics of Docker Compose
+isNew: true
+isPremium: true
 level: beginner
+isAvailable: true
 license: ""
 steps:
 - step1.md
@@ -16,6 +11,5 @@ steps:
 - step3.md
 - step4.md
 - step5.md
-thumbnail: https://brainarator.s3.amazonaws.com/kubernetes.svg
 time: 15 mins
 title: Test Exploring Kubernetes Deployments
