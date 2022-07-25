@@ -12,5 +12,5 @@ steps:
 - step4.md
 - step5.md
 - step6.md
-time: 25 mins
+time: 25 minutes
 title: Test Init Containers
