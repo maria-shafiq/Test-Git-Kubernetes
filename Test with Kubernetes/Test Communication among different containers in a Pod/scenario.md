@@ -10,6 +10,5 @@ steps:
 - step2.md
 - step3.md
 - step4.md
-thumbnail: https://brainarator.s3.amazonaws.com/kubernetes.svg
 time: 20 mins
 title: Test Communication among different containers in a Pod
