@@ -1,53 +1,57 @@
 ---
-title: Step 2
+title: Introduction to Istio and installation process
 
 ---
-<!-- creating a pod -->
+<!--Installation of Istio in the cluster-->
 
-To play with kubectl outputs, let's create the following Deployment.
+As we have seen in the theories that Istio helps in network communication for the cluster mainly for microservice architectures. Before moving to the service mesh terms, let's first learn how to install Istio.
 
-Create "deployment-1.yaml":
+Managing the services manually becomes a challenge as all of these non-business services require extra management. But Istio makes it centralized and covers all the mess in the mesh.! We implement this Istio service as a sidecar proxy that is independent of the business application.
 
-``` yaml
-apiVersion: apps/v1
-kind: Deployment
-metadata:
-  name: busybox
-spec:
-  replicas: 1
-  selector:
-    matchLabels:
-      name: busybox
-  template:
-    metadata:
-      labels:
-        name: busybox
-    spec:
-      containers:
-        - name: busybox
-          image: busybox
-          command: ["/bin/sh","-c"]
-          args: ["echo Hello from container 1; while true; do sleep 604800; done"]       
-{{copy fileName='deployment-1.yaml'}}
+Istio has a separate control plane, and we only have to install it in the master node. Rest sidecar injection will be done automatically.
+
+Let's install Istio in the master node:
+
+*This command will download the latest stable version. Currently, the latest version is 1.13.2.* 
+
+Run the below command to download the latest release:
+
+{{ execute }}
 ```
-
-Use the following command in order to create this deployment:
-
+curl -L https://istio.io/downloadIstio | sh -
 ```
-kubectl apply -f deployment-1.yaml{{ execute }}
+{{ /execute }}
+
+Switch to the Istio download directory:
+
+{{ execute }}
 ```
-
-This will create a Pod that we named "busybox". It uses Busbox image and launch the infinite loop `while true; do sleep 604800; done` to stay up and running during 1 week (604800 seconds).
-
-
-Now when we use 
-
+cd istio-1.13.2
 ```
-kubectl get pods{{ execute }}
-```
-we will get the basic representation of kubectl output:
+{{ /execute }}
 
-```bash
-NAME    READY   STATUS    RESTARTS   AGE
-<name>  <x/y>   <status>  <restarts> <age>
+Add `istioctl` client path to the path:
+
+{{ execute }}
 ```
+export PATH=$PWD/bin:$PATH
+```
+{{ /execute }}
+
+Now let's install Istio and the services:
+
+{{ execute }}
+```
+istioctl install --set profile=demo -y
+```
+{{ /execute }}
+
+Now label the namespace so that the control plane can perform Istio injection in the application and detect it via this label:
+
+{{ execute }}
+```
+kubectl label namespace default istio-injection=enabled
+```
+{{ /execute }}
+
+Till here, we've completed the download and installation of the Istio v1.13.2 and labeled the namespace for further automated processes. We will see the application deployment part and networking setup in the next step.
