@@ -10,5 +10,5 @@ steps:
 - step2.md
 - step3.md
 - step4.md
-time: 20 mins
+time: 20 minutes
 title: Test Communication among different containers in a Pod
