@@ -1,36 +1,57 @@
 ---
-title: Step 7
+title: Introduction to Istio and installation process
 
 ---
-<!-- Printing the resource name -->
+<!--Installation of Istio in the cluster-->
 
-The wide format shows more information than the default output. This is useful in case you need more details, but sometimes, you need fewer details. For example, you only need to output the name of the resource.Let's do this. 
+As we have seen in the theories that Istio helps in network communication for the cluster mainly for microservice architectures. Before moving to the service mesh terms, let's first learn how to install Istio.
 
-So in order to only print names, we should use the "name" formatter:
+Managing the services manually becomes a challenge as all of these non-business services require extra management. But Istio makes it centralized and covers all the mess in the mesh.! We implement this Istio service as a sidecar proxy that is independent of the business application.
 
+Istio has a separate control plane, and we only have to install it in the master node. Rest sidecar injection will be done automatically.
+
+Let's install Istio in the master node:
+
+*This command will download the latest stable version. Currently, the latest version is 1.13.2.* 
+
+Run the below command to download the latest release:
+
+{{ execute }}
 ```
-kubectl get pods --output name{{ execute }}
+curl -L https://istio.io/downloadIstio | sh -
 ```
+{{ /execute }}
 
-or 
+Switch to the Istio download directory:
 
+{{ execute }}
 ```
-kubectl get pods -o name{{ execute }}
+cd istio-1.13.2
 ```
+{{ /execute }}
 
+Add `istioctl` client path to the path:
 
-This command will print the names of all pods running in out cluster. We can also apply it to other resources like Deployment:
-
+{{ execute }}
 ```
-kubectl get deployments -o name{{ execute }}
+export PATH=$PWD/bin:$PATH
 ```
+{{ /execute }}
 
-The output here is quite similar to the one generated when executing `kubectl get <resource> -o custom-columns=NAME:.metadata.name`.
+Now let's install Istio and the services:
 
-This formatter is useful in some cases when, for instance, you need to run a for loop over resource names in order to execute another command.
-
-Example:
-
+{{ execute }}
 ```
-kubectl get pod -o name | xargs kubectl describe{{ execute }}
+istioctl install --set profile=demo -y
 ```
+{{ /execute }}
+
+Now label the namespace so that the control plane can perform Istio injection in the application and detect it via this label:
+
+{{ execute }}
+```
+kubectl label namespace default istio-injection=enabled
+```
+{{ /execute }}
+
+Till here, we've completed the download and installation of the Istio v1.13.2 and labeled the namespace for further automated processes. We will see the application deployment part and networking setup in the next step.
