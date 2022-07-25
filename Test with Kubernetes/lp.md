@@ -13,5 +13,4 @@ scenarios:
 - How to run multiple Containers in a Pod
 - Formatting Kubectl Output
 - Init Containers
-thumbnail: https://brainarator.s3.amazonaws.com/new/pngs/kubernetes.png
 title: Test with Kubernetes
