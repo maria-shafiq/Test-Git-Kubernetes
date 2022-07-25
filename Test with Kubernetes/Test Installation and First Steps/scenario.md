@@ -11,5 +11,6 @@ steps:
 - step3.md
 - step4.md
 - step5.md
+- samplefile.png
 time: 40 minutes
 title: Test Installation and First Steps
