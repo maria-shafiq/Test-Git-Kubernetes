@@ -1,33 +1,57 @@
 ---
-title: Step 8
+title: Introduction to Istio and installation process
 
 ---
-<!-- Output YAML -->
+<!--Installation of Istio in the cluster-->
 
-The YAML output is more verbose than the 3 previous formats, as it shows more details like the metadata information, DNS, restart policies, volumes ..etc.
+As we have seen in the theories that Istio helps in network communication for the cluster mainly for microservice architectures. Before moving to the service mesh terms, let's first learn how to install Istio.
 
-In order to use this formatter, execute the following command:
+Managing the services manually becomes a challenge as all of these non-business services require extra management. But Istio makes it centralized and covers all the mess in the mesh.! We implement this Istio service as a sidecar proxy that is independent of the business application.
 
+Istio has a separate control plane, and we only have to install it in the master node. Rest sidecar injection will be done automatically.
+
+Let's install Istio in the master node:
+
+*This command will download the latest stable version. Currently, the latest version is 1.13.2.* 
+
+Run the below command to download the latest release:
+
+{{ execute }}
 ```
-kubectl get pods -o yaml{{ execute }}
+curl -L https://istio.io/downloadIstio | sh -
 ```
+{{ /execute }}
 
-The output is a long YAML object, with the necessary details that you need to understand the state of a Kubernetes object.
+Switch to the Istio download directory:
 
-When we run `kubectl get pods -o yaml`, we are printing the output of all pods, but sometimes we need to view a single Pod (or a signle object in general).
-
-It is possible to use the formatter with a single Pod using `kubectl get pods <pod_name> -o yaml`
-
-If you want to try this, let's get the name of the pod using:
-
+{{ execute }}
 ```
-POD=`kubectl get pod -l name=busybox -o jsonpath="{.items[0].metadata.name}"`{{ execute }}
+cd istio-1.13.2
 ```
+{{ /execute }}
 
-Now, let's execute the YAML formatter on the same pod using:
+Add `istioctl` client path to the path:
 
+{{ execute }}
 ```
-kubectl get pods $POD -o yaml{{ execute }}
+export PATH=$PWD/bin:$PATH
 ```
+{{ /execute }}
 
-With the YAML formatter you can use commands like [yq](https://github.com/mikefarah/yq) to make getting specific data from a YAML output easy.
+Now let's install Istio and the services:
+
+{{ execute }}
+```
+istioctl install --set profile=demo -y
+```
+{{ /execute }}
+
+Now label the namespace so that the control plane can perform Istio injection in the application and detect it via this label:
+
+{{ execute }}
+```
+kubectl label namespace default istio-injection=enabled
+```
+{{ /execute }}
+
+Till here, we've completed the download and installation of the Istio v1.13.2 and labeled the namespace for further automated processes. We will see the application deployment part and networking setup in the next step.
