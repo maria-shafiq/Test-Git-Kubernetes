@@ -11,5 +11,5 @@ steps:
 - step3.md
 - step4.md
 - step5.md
-time: 15 mins
+time: 15 minutes
 title: Test Exploring Kubernetes Deployments
