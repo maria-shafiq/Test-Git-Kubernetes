@@ -1,75 +1,184 @@
 ---
-title: Step 6
+title: Destination Rules and Virtual Service
 
 ---
-<!-- Multiple init containers -->
+<!--Implementation of default destination and simple virtual service-->
 
-If you have many tasks that the init container should execute, a good practice is breaking tasks into a number of steps, each handled by a different init container in order to easily identify the failing initializations.
+In this demo we will see two different results. We will implement virtual service resources using Istio.
 
-In order to understand how multiple containers are executed, create "multiple-init-container-app.yaml" file:
+Istio helps in routing traffic based on constraints and rules defined by the user. We call "subsets" the routing destination.
 
-```
-touch multiple-init-container-app.yaml{{ execute }}
-```
+Let's apply the default destination rule for the application, so if no other explicit rules are declared, these rules will be applied. 
 
-Then add the following manifest. 
+For this demo, we will set the default destination rules to route all traffic equally to the microservice.
+
+Take a look at the YAML file for default route configuration:
 
 ```yaml
-apiVersion: v1
-kind: Pod
+apiVersion: networking.istio.io/v1alpha3
+kind: DestinationRule
 metadata:
-  name: multiple-init-container-app
+  name: productpage
 spec:
-  containers:
-  - name: nginx-container
-    image: nginx
-    ports:
-    - containerPort: 80
-    volumeMounts:
-    - name: website-volume
-      mountPath: /usr/share/nginx/html
-  initContainers:
-  - name: init-container-1
-    image: busybox
-    command: ['sh', '-c', 'echo This index page was created by the init container 1 > /website/index.html']
-    volumeMounts:
-    - name: website-volume
-      mountPath: "/website"
-  - name: init-container-2
-    image: busybox
-    command: ['sh', '-c', 'echo This index page was created by the init container 2 >> /website/index.html']
-    volumeMounts:
-    - name: website-volume
-      mountPath: "/website"      
-  - name: init-container-3
-    image: busybox
-    command: ['sh', '-c', 'echo This index page was created by the init container 3 >> /website/index.html']
-    volumeMounts:
-    - name: website-volume
-      mountPath: "/website"           
-  volumes:
-  - name: website-volume
-{{copy fileName='multiple-init-container-app.yaml'}}
+  host: productpage
+  subsets:
+  - name: v1
+    labels:
+      version: v1
+---
+apiVersion: networking.istio.io/v1alpha3
+kind: DestinationRule
+metadata:
+  name: reviews
+spec:
+  host: reviews
+  subsets:
+  - name: v1
+    labels:
+      version: v1
+  - name: v2
+    labels:
+      version: v2
+  - name: v3
+    labels:
+      version: v3
+---
+apiVersion: networking.istio.io/v1alpha3
+kind: DestinationRule
+metadata:
+  name: ratings
+spec:
+  host: ratings
+  subsets:
+  - name: v1
+    labels:
+      version: v1
+  - name: v2
+    labels:
+      version: v2
+  - name: v2-mysql
+    labels:
+      version: v2-mysql
+  - name: v2-mysql-vm
+    labels:
+      version: v2-mysql-vm
+---
+apiVersion: networking.istio.io/v1alpha3
+kind: DestinationRule
+metadata:
+  name: details
+spec:
+  host: details
+  subsets:
+  - name: v1
+    labels:
+      version: v1
+  - name: v2
+    labels:
+      version: v2
+---
 ```
 
-Apply the manifest using:
+The resource kind `DestinationRule` uses the declarations mentioned in the code and applies those rules. For default behavior, we've taken a simple route to all components of the microservice.
 
+
+Run the below command to apply the default destination route:
+
+{{execute}}
 ```
-kubectl apply -f multiple-init-container-app.yaml{{ execute }}
+kubectl apply -f samples/bookinfo/networking/destination-rule-all.yaml
 ```
+{{/execute}}
 
-The previous configuration create 3 init containers: "init-container-1", "init-container-2" and "init-container-3". 
+Cross verify the same changes using the command below:
 
-Init containers will be executed in the order they are defined. This can be verified by executing `curl http://0.0.0.0` on "nginx-container".
-
+{{execute}}
 ```
-kubectl exec -it multiple-init-container-app curl http://0.0.0.0{{ execute }}
+kubectl get destinationrules -o yaml
 ```
+{{/execute}}
 
-You should be able to see:
+Now, to apply dynamic or version-based routing, we have to implement a `VirtualService`. A Virtual Service is a important feature in traffic management. It adds flexibility in traffic distribution. With a Virtual Service, we can specify traffic behavior for multiple hosts. This feature is used when we want to send traffic to multiple versions of the same application or in the A/B testing approach. We can divide and distribute traffic in ratio and further analyze the application behavior. We mention the particular subset in the config file and distribute traffic.
 
-```bash
-This index page was created by the init container 1
-This index page was created by the init container 2
-This index page was created by the init container 3
+Virtual service resource is important for the current scenario.
+
+Refer to the YAML file below for the virtual service we're applying:
+
+{{ copy filename='virtual-service.yaml' }}
 ```
+apiVersion: networking.istio.io/v1alpha3
+kind: VirtualService
+metadata:
+  name: productpage
+spec:
+  hosts:
+  - productpage
+  http:
+  - route:
+    - destination:
+        host: productpage
+        subset: v1
+---
+apiVersion: networking.istio.io/v1alpha3
+kind: VirtualService
+metadata:
+  name: reviews
+spec:
+  hosts:
+  - reviews
+  http:
+  - route:
+    - destination:
+        host: reviews
+        subset: v1
+---
+apiVersion: networking.istio.io/v1alpha3
+kind: VirtualService
+metadata:
+  name: ratings
+spec:
+  hosts:
+  - ratings
+  http:
+  - route:
+    - destination:
+        host: ratings
+        subset: v1
+---
+apiVersion: networking.istio.io/v1alpha3
+kind: VirtualService
+metadata:
+  name: details
+spec:
+  hosts:
+  - details
+  http:
+  - route:
+    - destination:
+        host: details
+        subset: v1
+---
+```
+{{ /copy }}
+
+You can see the difference now in what we did. We created a default destination rule that routes traffic for the default scenario. Then we applied a Virtual Service route to send the traffic to only v1 of the application.
+
+Run the below command to apply the YAML file for Virtual Service:
+
+{{execute}}
+```
+kubectl apply -f virtual-service.yaml
+```
+{{/execute}}
+
+Cross verify the same with the command below:
+
+{{execute}}
+```
+kubectl get virtualservices -o yaml
+```
+{{/execute}}
+
+We can test this traffic route by hitting the website. According to the rules, it will only divert the traffic to v1. Until here, we successfully did dynamic routing to a specific version of the application.
+
+In the next step, we'll see how we can add identity-based routing rules.
