@@ -1,11 +1,9 @@
 categories:
-- Kubernetes
-description: Get started using Kubernetes. Learn the kubernetes concepts by doing.
-isDraft: false
-approvalStatus: true
+  - Kubernetes
+description: Lets learn how to develop a concurrent application in Go language.
 isAvailable: true
-isNew: false
-isPremium: false
+isPremium: true
+isNew: true
 license: Apache
 scenarioCount: 6
 scenarios:
