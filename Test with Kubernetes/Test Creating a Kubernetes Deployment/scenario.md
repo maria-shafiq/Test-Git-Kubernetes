@@ -12,5 +12,5 @@ steps:
 - step4.md
 - step5.md
 - step6.md
-time: 20 mins
+time: 20 minutes
 title: Test Creating a Kubernetes Deployment
