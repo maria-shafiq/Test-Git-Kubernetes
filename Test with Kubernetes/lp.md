@@ -7,10 +7,10 @@ isNew: true
 license: Apache
 scenarioCount: 6
 scenarios:
-- Exploring Kubernetes Deployments
-- Creating a Kubernetes Deployment
-- Communication among different containers in a Pod
-- How to run multiple Containers in a Pod
-- Formatting Kubectl Output
-- Init Containers
+- Test Exploring Kubernetes Deployments
+- Test Creating a Kubernetes Deployment
+- Test Communication among different containers in a Pod
+- Test How to run multiple Containers in a Pod
+- Test Formatting Kubectl Output
+- Test Init Containers
 title: Test with Kubernetes
