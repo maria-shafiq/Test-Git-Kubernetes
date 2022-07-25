@@ -1,72 +1,57 @@
 ---
-title: Step 6
+title: Introduction to Istio and installation process
 
 ---
-In this part we are going to create a Kubernetes service. Let's understand some basic concepts first.
+<!--Installation of Istio in the cluster-->
 
-A service is an abstraction used to define a logical set of Pods and a policy by which to access them.
+As we have seen in the theories that Istio helps in network communication for the cluster mainly for microservice architectures. Before moving to the service mesh terms, let's first learn how to install Istio.
 
-Let's start by a simple and basic use case in which we are going to define how we can access the http server we already deployed.
+Managing the services manually becomes a challenge as all of these non-business services require extra management. But Istio makes it centralized and covers all the mess in the mesh.! We implement this Istio service as a sidecar proxy that is independent of the business application.
 
-As for now, our Deployment runs the httpserver container, but the server itself can not be accessed by simply using a deployment object, hence the use of the service object.
+Istio has a separate control plane, and we only have to install it in the master node. Rest sidecar injection will be done automatically.
 
-Create "service.yaml" file:
+Let's install Istio in the master node:
 
+*This command will download the latest stable version. Currently, the latest version is 1.13.2.* 
+
+Run the below command to download the latest release:
+
+{{ execute }}
 ```
-touch service.yaml{{ execute }}
+curl -L https://istio.io/downloadIstio | sh -
 ```
+{{ /execute }}
 
-Then add the following YAML code:
+Switch to the Istio download directory:
 
-```yaml
-apiVersion: v1
-kind: Service
-metadata:
-  name: httpserver-service
-  labels:
-    app: httpserver
-spec:
-  type: NodePort
-  ports:
-  - port: 80
-    nodePort: 32767
-  selector:
-    app: httpserver
-{{copy fileName='service.yaml'}}
+{{ execute }}
 ```
-
-Create the service:
-
+cd istio-1.13.2
 ```
-kubectl create -f service.yaml{{ execute }}
-```
+{{ /execute }}
 
-Once the service is ready, you see it using:
+Add `istioctl` client path to the path:
 
+{{ execute }}
 ```
-kubectl get service httpserver-service{{ execute }}
+export PATH=$PWD/bin:$PATH
 ```
+{{ /execute }}
 
-If you want to see all your services, you can use:
+Now let's install Istio and the services:
 
+{{ execute }}
 ```
-kubectl get service{{ execute }}
+istioctl install --set profile=demo -y
 ```
+{{ /execute }}
 
-or
+Now label the namespace so that the control plane can perform Istio injection in the application and detect it via this label:
 
+{{ execute }}
 ```
-kubectl get services{{ execute }}
+kubectl label namespace default istio-injection=enabled
 ```
+{{ /execute }}
 
-or even:
-
-```
-kubectl get svc{{ execute }}
-```
-
-The httpserver service should now be accessible in our local development environment. We can test this by using a curl command:
-
-```
-curl http://localhost:32767{{ execute }}
-```
+Till here, we've completed the download and installation of the Istio v1.13.2 and labeled the namespace for further automated processes. We will see the application deployment part and networking setup in the next step.
