@@ -16,5 +16,5 @@ steps:
 - step8.md
 - step9.md
 - step10.md
-time: 45 mins
+time: 45 minutes
 title: Test Formatting Kubectl Output
