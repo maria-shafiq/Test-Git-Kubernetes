@@ -9,5 +9,5 @@ steps:
 - step1.md
 - step2.md
 - step3.md
-time: 15 mins
+time: 15 minutes
 title: Test How to run multiple Containers in a Pod
