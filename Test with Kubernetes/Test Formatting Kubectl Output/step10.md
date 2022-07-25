@@ -1,43 +1,57 @@
 ---
-title: Step 10
+title: Introduction to Istio and installation process
 
 ---
-<!-- Using jsonpath expressions -->
+<!--Installation of Istio in the cluster-->
 
-JSONPath is used to select and extract a JSON document's property values. Kubectl supports JSONPath template.
+As we have seen in the theories that Istio helps in network communication for the cluster mainly for microservice architectures. Before moving to the service mesh terms, let's first learn how to install Istio.
 
-The JSON output obtained when we execute the following command contains many details:
+Managing the services manually becomes a challenge as all of these non-business services require extra management. But Istio makes it centralized and covers all the mess in the mesh.! We implement this Istio service as a sidecar proxy that is independent of the business application.
 
+Istio has a separate control plane, and we only have to install it in the master node. Rest sidecar injection will be done automatically.
+
+Let's install Istio in the master node:
+
+*This command will download the latest stable version. Currently, the latest version is 1.13.2.* 
+
+Run the below command to download the latest release:
+
+{{ execute }}
 ```
-kubectl get pods $POD -o json{{ execute }}
+curl -L https://istio.io/downloadIstio | sh -
 ```
+{{ /execute }}
 
-Sometimes, we need to get some elements from the JSON output. This is when we can leverage JSONPath support.
+Switch to the Istio download directory:
 
-JSONPath expressions are used when we need to execute more complex operations and view a more customized output.
-
-For example, to list all container images running in a cluster, we should iterate through the pods inside the output of `kubectl get pods --all-namespaces -o jsonpath="{.items[*]}`, then for each iteration we need to get the `.spec.containers` of each Pod, then iterate through each container to get the `.image`.
-
-This is how we transalte this to an expression:
-
+{{ execute }}
 ```
-kubectl get pods --all-namespaces -o jsonpath="{.items[*].spec.containers[*].image}"{{ execute }}
+cd istio-1.13.2
 ```
+{{ /execute }}
 
-We call `{.items[*].spec.containers[*].image}` a JSONPath expression.
+Add `istioctl` client path to the path:
 
-Note that you need to use double quotes to quote text inside JSONPath expressions.
-
-Another way to do the same thing is **recursively** parsing the output of `kubectl get pods --all-namespaces` to find the `image` field:
-
+{{ execute }}
 ```
-kubectl get pods --all-namespaces -o jsonpath="{..image}"{{ execute }}
+export PATH=$PWD/bin:$PATH
 ```
+{{ /execute }}
 
-To make the output more readable, we can use everyday Linux command like "tr" and replace the space by a new line: 
+Now let's install Istio and the services:
 
+{{ execute }}
 ```
-kubectl get pods --all-namespaces -o jsonpath="{..image}"  | tr -s '[[:space:]]' '\n' {{ execute }}
+istioctl install --set profile=demo -y
 ```
+{{ /execute }}
 
-JSONPath regular expressions are not supported, you can use jq in this case.
+Now label the namespace so that the control plane can perform Istio injection in the application and detect it via this label:
+
+{{ execute }}
+```
+kubectl label namespace default istio-injection=enabled
+```
+{{ /execute }}
+
+Till here, we've completed the download and installation of the Istio v1.13.2 and labeled the namespace for further automated processes. We will see the application deployment part and networking setup in the next step.
