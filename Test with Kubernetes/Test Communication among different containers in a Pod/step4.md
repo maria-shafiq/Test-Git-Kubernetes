@@ -1,97 +1,184 @@
 ---
-title: Step 4
+title: Destination Rules and Virtual Service
 
 ---
-<!--shared volumes part 2-->
-In the previous step, we updated the index page by getting into "webserver" container. In order to demonstrate how containers share the volumes inside a Pod, we are going to do this differently.
+<!--Implementation of default destination and simple virtual service-->
 
+In this demo we will see two different results. We will implement virtual service resources using Istio.
 
-In order to avoid any inconsistency problem, delete the pod before proceeding:
+Istio helps in routing traffic based on constraints and rules defined by the user. We call "subsets" the routing destination.
 
-```
-kubectl delete pod my-pod{{ execute }}
-```
+Let's apply the default destination rule for the application, so if no other explicit rules are declared, these rules will be applied. 
 
-Let's create a shared volume by adding the following code the the Pod spec:
+For this demo, we will set the default destination rules to route all traffic equally to the microservice.
 
-```
-  volumes:
-  - name: shared-volume
-    emptyDir: {}      
-```
-
-Then we need to mount it to both containers:
+Take a look at the YAML file for default route configuration:
 
 ```yaml
-apiVersion: v1
-kind: Pod
+apiVersion: networking.istio.io/v1alpha3
+kind: DestinationRule
 metadata:
-  name: my-pod
-  namespace: default
+  name: productpage
 spec:
-  containers:
-  - name: webserver
-    image: nginx
-    ports:
-    - containerPort: 80  
-    volumeMounts:
-    - name: shared-volume
-      mountPath: /usr/share/nginx/html
-  - name: alpine
-    image: alpine:3.2
-    command:
-      - /bin/sh
-      - "-c"
-      - "sleep 60m"
-***    volumeMounts:
-    - name: shared-volume
-      mountPath: /data
-  volumes:
-  - name: shared-volume
-    emptyDir: {}
-***
-{{copy fileName:'two-containers.yaml'}}
+  host: productpage
+  subsets:
+  - name: v1
+    labels:
+      version: v1
+---
+apiVersion: networking.istio.io/v1alpha3
+kind: DestinationRule
+metadata:
+  name: reviews
+spec:
+  host: reviews
+  subsets:
+  - name: v1
+    labels:
+      version: v1
+  - name: v2
+    labels:
+      version: v2
+  - name: v3
+    labels:
+      version: v3
+---
+apiVersion: networking.istio.io/v1alpha3
+kind: DestinationRule
+metadata:
+  name: ratings
+spec:
+  host: ratings
+  subsets:
+  - name: v1
+    labels:
+      version: v1
+  - name: v2
+    labels:
+      version: v2
+  - name: v2-mysql
+    labels:
+      version: v2-mysql
+  - name: v2-mysql-vm
+    labels:
+      version: v2-mysql-vm
+---
+apiVersion: networking.istio.io/v1alpha3
+kind: DestinationRule
+metadata:
+  name: details
+spec:
+  host: details
+  subsets:
+  - name: v1
+    labels:
+      version: v1
+  - name: v2
+    labels:
+      version: v2
+---
 ```
 
-Now, apply the new configuration using:
+The resource kind `DestinationRule` uses the declarations mentioned in the code and applies those rules. For default behavior, we've taken a simple route to all components of the microservice.
 
 
+Run the below command to apply the default destination route:
+
+{{execute}}
 ```
-kubectl apply -f two-containers.yaml{{ execute }}
+kubectl apply -f samples/bookinfo/networking/destination-rule-all.yaml
 ```
+{{/execute}}
 
-When "webserver" container write a file to `/usr/share/nginx/html`, the change will be reflected in the volume. Since the volume is also mapped to `/data` on "alpine" container, the file will be also created on the "alpine" container.
+Cross verify the same changes using the command below:
 
-The reverse operation will give the same result. When we create a file under `/data` in "alpine" container, the same file will be created on"webserver" under `/usr/share/nginx/html`.
-
-Get into "alpine" container using:
-
+{{execute}}
 ```
-kubectl exec -it my-pod -c  alpine sh{{ execute }}
+kubectl get destinationrules -o yaml
 ```
+{{/execute}}
 
-Then create a new  `index.html` using:
+Now, to apply dynamic or version-based routing, we have to implement a `VirtualService`. A Virtual Service is a important feature in traffic management. It adds flexibility in traffic distribution. With a Virtual Service, we can specify traffic behavior for multiple hosts. This feature is used when we want to send traffic to multiple versions of the same application or in the A/B testing approach. We can divide and distribute traffic in ratio and further analyze the application behavior. We mention the particular subset in the config file and distribute traffic.
 
+Virtual service resource is important for the current scenario.
+
+Refer to the YAML file below for the virtual service we're applying:
+
+{{ copy filename='virtual-service.yaml' }}
 ```
-echo "This is the newest index page" > /data/index.html{{ execute }}
+apiVersion: networking.istio.io/v1alpha3
+kind: VirtualService
+metadata:
+  name: productpage
+spec:
+  hosts:
+  - productpage
+  http:
+  - route:
+    - destination:
+        host: productpage
+        subset: v1
+---
+apiVersion: networking.istio.io/v1alpha3
+kind: VirtualService
+metadata:
+  name: reviews
+spec:
+  hosts:
+  - reviews
+  http:
+  - route:
+    - destination:
+        host: reviews
+        subset: v1
+---
+apiVersion: networking.istio.io/v1alpha3
+kind: VirtualService
+metadata:
+  name: ratings
+spec:
+  hosts:
+  - ratings
+  http:
+  - route:
+    - destination:
+        host: ratings
+        subset: v1
+---
+apiVersion: networking.istio.io/v1alpha3
+kind: VirtualService
+metadata:
+  name: details
+spec:
+  hosts:
+  - details
+  http:
+  - route:
+    - destination:
+        host: details
+        subset: v1
+---
 ```
+{{ /copy }}
 
-Install curl again:
+You can see the difference now in what we did. We created a default destination rule that routes traffic for the default scenario. Then we applied a Virtual Service route to send the traffic to only v1 of the application.
 
+Run the below command to apply the YAML file for Virtual Service:
+
+{{execute}}
 ```
-apk --no-cache add curl{{ execute }}
+kubectl apply -f virtual-service.yaml
 ```
+{{/execute}}
 
-Then check the localhost on port 80 to check if the Nginx server is using the new index page:
+Cross verify the same with the command below:
 
+{{execute}}
 ```
-curl http://localhost:80{{ execute }}
+kubectl get virtualservices -o yaml
 ```
+{{/execute}}
 
-You will be able to see the new line we added to the index page:
+We can test this traffic route by hitting the website. According to the rules, it will only divert the traffic to v1. Until here, we successfully did dynamic routing to a specific version of the application.
 
-```
-This is the newest index page
-```
-
-The volume is part of the Pod, but it can be shared easily between containers without any headache. Containers in the same Pod share the same resources including volumes and network. 
+In the next step, we'll see how we can add identity-based routing rules.
