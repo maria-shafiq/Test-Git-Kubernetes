@@ -1,14 +1,9 @@
-authors: null
-backendImage: ""
-description: Explore the communication flow among containers in a pod.
-isDraft: false
-approvalStatus: true
-environment: ""
-environmentVars: null
-isAvailable: true
-isNew: false
+image: ""
+description: An Introductory scenario for Python developers to explore the basics of Docker Compose
+isNew: true
 isPremium: true
 level: beginner
+isAvailable: true
 license: ""
 steps:
 - step1.md
