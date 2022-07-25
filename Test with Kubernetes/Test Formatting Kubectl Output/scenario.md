@@ -1,14 +1,9 @@
-authors: null
-backendImage: ""
-description: Lets learn about formatting the output by different Kubectl commands.
-isDraft: false
-approvalStatus: true
-environment: ""
-environmentVars: null
-isAvailable: true
-isNew: false
+image: ""
+description: An Introductory scenario for Python developers to explore the basics of Docker Compose
+isNew: true
 isPremium: true
 level: beginner
+isAvailable: true
 license: ""
 steps:
 - step1.md
@@ -21,6 +16,5 @@ steps:
 - step8.md
 - step9.md
 - step10.md
-thumbnail: https://brainarator.s3.amazonaws.com/kubernetes.svg
 time: 45 mins
 title: Test Formatting Kubectl Output
