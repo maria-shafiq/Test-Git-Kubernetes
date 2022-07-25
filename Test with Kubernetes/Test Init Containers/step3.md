@@ -1,93 +1,57 @@
 ---
-title: Step 3
+title: Introduction to Istio and installation process
 
 ---
-<!--Creating an init container -->
+<!--Installation of Istio in the cluster-->
 
-In order better understand how to use init containers, we are going to create an Nginx server hosting a simple static HTML page. 
-Before the NGINX server start, an init container will create the HTML page, add it to the web server directory then die.
+As we have seen in the theories that Istio helps in network communication for the cluster mainly for microservice architectures. Before moving to the service mesh terms, let's first learn how to install Istio.
 
-On a fresh Nginx installation, the default index page is found in `/usr/share/nginx/html/index.html`. 
-If we need another container (the init container in our case) to update the index.html page, we need to mount the folder to a volume. The volume will be shared with the init container. The init container will be able to create the index page.
+Managing the services manually becomes a challenge as all of these non-business services require extra management. But Istio makes it centralized and covers all the mess in the mesh.! We implement this Istio service as a sidecar proxy that is independent of the business application.
 
-Let's start by creating an Nginx container and map the `/usr/share/nginx/html` to a volume.
+Istio has a separate control plane, and we only have to install it in the master node. Rest sidecar injection will be done automatically.
 
-Open a new file "init-container-app.yaml":
+Let's install Istio in the master node:
 
+*This command will download the latest stable version. Currently, the latest version is 1.13.2.* 
+
+Run the below command to download the latest release:
+
+{{ execute }}
 ```
-touch init-container-app.yaml{{ execute }}
+curl -L https://istio.io/downloadIstio | sh -
 ```
+{{ /execute }}
 
-Then add the following YAML:
+Switch to the Istio download directory:
 
-```yaml
-apiVersion: v1
-kind: Pod
-metadata:
-  name: init-container-app
-spec:
-  containers:
-  - name: nginx-container
-    image: nginx
-    ports:
-    - containerPort: 80
-    volumeMounts:
-    - name: website-volume
-      mountPath: /usr/share/nginx/html
-  volumes:
-  - name: website-volume
-{{copy fileName='init-container-app.yaml'}}
+{{ execute }}
 ```
-
-The second step is adding the init container. Update "init-container-app.yaml" so that it look like this:
-
-```yaml
-apiVersion: v1
-kind: Pod
-metadata:
-  name: init-container-app
-spec:
-  containers:
-  - name: nginx-container
-    image: nginx
-    ports:
-    - containerPort: 80
-    volumeMounts:
-    - name: website-volume
-      mountPath: /usr/share/nginx/html
-***  initContainers:
-  - name: init-container
-    image: busybox
-    command: ['sh', '-c', 'echo This index page was created by the init container > /website/index.html']
-    volumeMounts:
-    - name: website-volume
-      mountPath: "/website"
-***
-  volumes:
-  - name: website-volume
-{{copy fileName='init-container-app.yaml'}}
+cd istio-1.13.2
 ```
+{{ /execute }}
 
-This configuration deploys the "init-container". It also mounts `/usr/share/nginx/html` on "nginx-container" to `/website` on "init-container" by mapping the volume "website-volume" to the container "init-container". 
+Add `istioctl` client path to the path:
 
-In other words, if "init-container" writes to `/website`, all modifications will be also written to `/usr/share/nginx/html` on "nginx-container".
-
-Apply the new configuration:
-
+{{ execute }}
 ```
-kubectl apply -f init-container-app.yaml{{ execute }}
-``` 
-
-The init container will be executed first, it may take some seconds to create the new "index.html" page. The init container dies after completing the execution. 
-
-You can check the new index page using:
-
+export PATH=$PWD/bin:$PATH
 ```
-kubectl exec -it init-container-app curl http://0.0.0.0{{ execute }}
-```
+{{ /execute }}
 
-You should be able to see:
+Now let's install Istio and the services:
 
-```bash
-This index page was created by the init container
+{{ execute }}
 ```
+istioctl install --set profile=demo -y
+```
+{{ /execute }}
+
+Now label the namespace so that the control plane can perform Istio injection in the application and detect it via this label:
+
+{{ execute }}
+```
+kubectl label namespace default istio-injection=enabled
+```
+{{ /execute }}
+
+Till here, we've completed the download and installation of the Istio v1.13.2 and labeled the namespace for further automated processes. We will see the application deployment part and networking setup in the next step.
